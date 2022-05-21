@@ -84,7 +84,7 @@ def main():
                 #print(type(info.your_group_id), info.your_group_id)
                 create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id)
                 print(f"Ответ на комментарий {post_owner_id,} отправлен")
-                time.sleep(3)
+                time.sleep(info.delay_for_message)
 
 main()
 
