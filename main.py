@@ -36,11 +36,13 @@ def get_owner_id_and_post_id_last_post(id):
 def get_owner_id_and_post_id_five_posts(id):
     session = vk_api.VkApi(token= info.token_vk)
     # сколько постов комментить в каждой группе
-    list_owner_id = []
     list_post_id = []
     owner_id = id
-    for i in range(count):
-        list_post_id.append(session.method('wall.get', {'owner_id':id,'count':info.posts_each_group, 'random_id' : random.randint(1000, 99999)})['items'][i]['id'])
+    for i in range(info.posts_each_group):
+        try:
+            list_post_id.append(session.method('wall.get', {'owner_id':owner_id, 'random_id' : random.randint(1000, 99999)})['items'][i]['id'])
+        except:
+            print(f"Комментарии под постом закончились")
     #print(owner_id, post_id)
     return owner_id, list_post_id
 
@@ -64,22 +66,27 @@ def create_comment(owner_id, post_id, reply_to_comment, from_group = 0):
 
 def main():
     list_links = read_lines_from_txt()
+    print(1)
     for link in list_links:
         # получаем id группы
+        print(2)
         group_id = get_id_by_link(link)
         # получаем id на последний пост
         post_owner_id, list_post_id = get_owner_id_and_post_id_five_posts(group_id)
         for i in range(len(list_post_id)):
+            print(3)
             post_id = list_post_id[i]
             # пишем коммент под последнии 5 комментов от лица вашего сообщества пользователям под их comment id 
             comment_ids = get_comments_id_under_post(post_owner_id, post_id)
             print(f"Comment_ids {comment_ids}")
             for reply_to_comment in comment_ids:
-                print(reply_to_comment)
-                print(type(info.your_group_id), info.your_group_id)
+                #print(reply_to_comment)
+                #print(type(info.your_group_id), info.your_group_id)
                 create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id)
-                print(f"Ответ на комментарий отправлен")
+                print(f"Ответ на комментарий {post_owner_id,} отправлен")
                 time.sleep(3)
+
+main()
 
 
 #post_id_id, post_id = get_owner_id_and_post_id_last_post(-213025701)
@@ -87,10 +94,6 @@ def main():
 #print(get_owner_id_and_post_id_five_posts(-213025701))
 
 #print(get_comments_id_under_post(-213025701, 2))
-
-
-
-main()
 
 # session = vk_api.VkApi(token= info.token_vk)
 # session.method('wall.createComment', {'owner_id' :user_id, 'post_id':,'from_group':0,'message':info.text[randint(0, len(info.text)-1)], 'random_id' : random.randint(1000, 99999)})
