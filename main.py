@@ -46,14 +46,28 @@ def get_owner_id_and_post_id_five_posts(id):
     #print(owner_id, post_id)
     return owner_id, list_post_id
 
+def leave_comment_under_post(owner_id, post_id):
+    message = info.text[randint(0, len(info.text)-1)]
+    session = vk_api.VkApi(token= info.token_vk)
+    session.method('wall.createComment', {'owner_id':owner_id,'post_id':post_id, 'message':message, 'from_group':info.your_group_id,'random_id' : random.randint(1000, 99999)})
+    print(f"Был оставлен комментарий")
+
 # получаем id 5 комментариев под постом
 def get_comments_id_under_post(post_owner_id, post_id):
     session = vk_api.VkApi(token= info.token_vk)
     comment_ids = []
     comments = session.method('wall.getComments', {'owner_id':post_owner_id,'post_id':post_id,'count':info.comments_under_each_post,'random_id' : random.randint(1000, 99999)})['items']
     for comment in comments:
-        comment_ids.append(comment['id'])
+        try:
+            if (comment['from_id'] != -info.your_group_id):
+                comment_ids.append(comment['id'])
+            else:
+                pass
+        except Exception as ex:
+            print(f"Error in get_comments_id_under_post {ex}")
     #print(comment_ids)
+    if (len(comment_ids) == 0):
+        leave_comment_under_post(post_owner_id, post_id)
     return comment_ids
 
 def create_comment(owner_id, post_id, reply_to_comment, from_group = 0):
@@ -66,27 +80,40 @@ def create_comment(owner_id, post_id, reply_to_comment, from_group = 0):
 
 def main():
     list_links = read_lines_from_txt()
-    print(1)
     for link in list_links:
-        # получаем id группы
-        print(2)
-        group_id = get_id_by_link(link)
-        # получаем id на последний пост
-        post_owner_id, list_post_id = get_owner_id_and_post_id_five_posts(group_id)
-        for i in range(len(list_post_id)):
-            print(3)
-            post_id = list_post_id[i]
-            # пишем коммент под последнии 5 комментов от лица вашего сообщества пользователям под их comment id 
-            comment_ids = get_comments_id_under_post(post_owner_id, post_id)
-            print(f"Comment_ids {comment_ids}")
-            for reply_to_comment in comment_ids:
-                #print(reply_to_comment)
-                #print(type(info.your_group_id), info.your_group_id)
-                create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id)
-                print(f"Ответ на комментарий {post_owner_id,} отправлен")
-                time.sleep(info.delay_for_message)
+        try:
+            # получаем id группы
+            group_id = get_id_by_link(link)
+            # получаем id на последний пост
+            post_owner_id, list_post_id = get_owner_id_and_post_id_five_posts(group_id)
+            for i in range(len(list_post_id)):
+                try:
+                    post_id = list_post_id[i]
+                    # пишем коммент под последнии 5 комментов от лица вашего сообщества пользователям под их comment id 
+                    comment_ids = get_comments_id_under_post(post_owner_id, post_id)
+                    print(f"Comment_ids {comment_ids}")
+                    for reply_to_comment in comment_ids:
+                        try:
+                            #print(reply_to_comment)
+                            #print(type(info.your_group_id), info.your_group_id)
+                            create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id)
+                            print(f"Ответ на комментарий {post_owner_id,} отправлен")
+                            time.sleep(info.delay_for_message)
+                        except Exception as ex:
+                            print(f"Error in reply_comment {ex}")
+                except Exception as ex:
+                    print(f"!!!!!!!")
+                    print(post_owner_id, list_post_id[i])
+                    print(f"Error in list_post_id {ex}")
+        except Exception as ex:
+            print(f"Error in list_links {ex}")
+
+# print(get_owner_id_and_post_id_last_post(-213025701))
+# owner_id, post_id = get_owner_id_and_post_id_last_post(-213025701)
+# leave_comment_under_post(owner_id, post_id)
 
 main()
+time.sleep(20)
 
 
 #post_id_id, post_id = get_owner_id_and_post_id_last_post(-213025701)
