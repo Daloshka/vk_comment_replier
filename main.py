@@ -5,6 +5,10 @@ from random import randint
 import datetime
 import time
 
+captcha_sid = None
+captcha_key = None
+captcha_url = 'Ссылка пуста'
+
 # Чтение ссылок из текстового документа
 def read_lines_from_txt():
     with open("group_links.txt") as file:
@@ -71,10 +75,23 @@ def get_comments_id_under_post(post_owner_id, post_id):
     return comment_ids
 
 def create_comment(owner_id, post_id, reply_to_comment, from_group = 0):
-    session = vk_api.VkApi(token= info.token_vk)
-    message = info.text[randint(0, len(info.text)-1)]
-    print(owner_id, post_id, reply_to_comment, from_group)
-    session.method('wall.createComment', {'owner_id':owner_id,'post_id':post_id, 'reply_to_comment':reply_to_comment, 'message':message, 'from_group':from_group,'random_id' : random.randint(1000, 99999)})
+    try:
+        if (captcha_sid is not None):
+            session = vk_api.VkApi(token= info.token_vk)
+            message = info.text[randint(0, len(info.text)-1)]
+            print(owner_id, post_id, reply_to_comment, from_group)
+            session.method('wall.createComment', {'owner_id':owner_id,'post_id':post_id, 'reply_to_comment':reply_to_comment, 'message':message, 'from_group':from_group, 'captcha_sid':captcha_sid, 'captcha_key':input(f'Введите капчу указаную в ссылке: {captcha_url}\n')})
+        else:
+            session = vk_api.VkApi(token= info.token_vk)
+            message = info.text[randint(0, len(info.text)-1)]
+            print(owner_id, post_id, reply_to_comment, from_group)
+            session.method('wall.createComment', {'owner_id':owner_id,'post_id':post_id, 'reply_to_comment':reply_to_comment, 'message':message, 'from_group':from_group})
+    except vk_api.exceptions.Captcha as captcha:
+        captcha_sid = captcha.sid
+        #print(captcha.sid) # Получение sid
+        captcha_url = captcha.get_url()
+        print(captcha.get_url()) # Получить ссылку на изображение капчи
+        #print(captcha.get_image()) # Получить изображение капчи (jpg)
     
 
 
@@ -93,14 +110,11 @@ def main():
                     comment_ids = get_comments_id_under_post(post_owner_id, post_id)
                     print(f"Comment_ids {comment_ids}")
                     for reply_to_comment in comment_ids:
-                        try:
-                            #print(reply_to_comment)
-                            #print(type(info.your_group_id), info.your_group_id)
-                            create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id)
-                            print(f"Ответ на комментарий {post_owner_id,} отправлен")
-                            time.sleep(info.delay_for_message)
-                        except Exception as ex:
-                            print(f"Error in reply_comment {ex}")
+                        #print(reply_to_comment)
+                        #print(type(info.your_group_id), info.your_group_id)
+                        create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id)
+                        print(f"Ответ на комментарий {post_owner_id} отправлен")
+                        time.sleep(info.delay_for_message)
                 except Exception as ex:
                     print(f"!!!!!!!")
                     print(post_owner_id, list_post_id[i])
