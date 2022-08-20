@@ -25,15 +25,15 @@ def get_id_by_link(url):
     session = vk_api.VkApi(token= info.token_vk)
     short_url = url.split('/')[-1]
     #print(short_url)
-    group_id = session.method('groups.getById', {'group_ids':short_url, 'random_id' : random.randint(1000, 99999)})[0]['id']
+    group_id = session.method('groups.getById', {'group_ids':short_url})[0]['id']
     group_id *= -1
     print(group_id)
     return group_id
 
 def get_owner_id_and_post_id_last_post(id):
     session = vk_api.VkApi(token= info.token_vk)
-    owner_id = session.method('wall.get', {'owner_id':id,'count':1, 'random_id' : random.randint(1000, 99999)})['items'][0]['owner_id']
-    post_id = session.method('wall.get', {'owner_id':id,'count':1, 'random_id' : random.randint(1000, 99999)})['items'][0]['id']
+    owner_id = session.method('wall.get', {'owner_id':id,'count':1})['items'][0]['owner_id']
+    post_id = session.method('wall.get', {'owner_id':id,'count':1})['items'][0]['id']
     #print(owner_id, post_id)
     return owner_id, post_id
 
@@ -44,7 +44,7 @@ def get_owner_id_and_post_id_five_posts(id):
     owner_id = id
     for i in range(info.posts_each_group):
         try:
-            list_post_id.append(session.method('wall.get', {'owner_id':owner_id, 'random_id' : random.randint(1000, 99999)})['items'][i]['id'])
+            list_post_id.append(session.method('wall.get', {'owner_id':owner_id})['items'][i]['id'])
         except:
             print(f"Комментарии под постом закончились")
     #print(owner_id, post_id)
@@ -74,7 +74,7 @@ def get_comments_id_under_post(post_owner_id, post_id):
         leave_comment_under_post(post_owner_id, post_id)
     return comment_ids
 
-def create_comment(owner_id, post_id, reply_to_comment, from_group = 0):
+def create_comment(owner_id, post_id, reply_to_comment, from_group = 0, captcha_sid=captcha_sid):
     try:
         if (captcha_sid is not None):
             session = vk_api.VkApi(token= info.token_vk)
@@ -112,12 +112,12 @@ def main():
                     for reply_to_comment in comment_ids:
                         #print(reply_to_comment)
                         #print(type(info.your_group_id), info.your_group_id)
-                        create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id)
+                        create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id, captcha_sid)
                         print(f"Ответ на комментарий {post_owner_id} отправлен")
                         time.sleep(info.delay_for_message)
                 except Exception as ex:
-                    print(f"!!!!!!!")
-                    print(post_owner_id, list_post_id[i])
+                    print(f"!!! ERROR  !!!!")
+                    print(post_owner_id, list_post_id[i], ex)
                     print(f"Error in list_post_id {ex}")
         except Exception as ex:
             print(f"Error in list_links {ex}")
