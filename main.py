@@ -74,13 +74,18 @@ def get_comments_id_under_post(post_owner_id, post_id):
         leave_comment_under_post(post_owner_id, post_id)
     return comment_ids
 
-def create_comment(owner_id, post_id, reply_to_comment, from_group = 0, captcha_sid=captcha_sid):
+def create_comment(owner_id, post_id, reply_to_comment, from_group = 0):
+    global captcha_sid
+    global captcha_key
     try:
         if (captcha_sid is not None):
             session = vk_api.VkApi(token= info.token_vk)
             message = info.text[randint(0, len(info.text)-1)]
             print(owner_id, post_id, reply_to_comment, from_group)
             session.method('wall.createComment', {'owner_id':owner_id,'post_id':post_id, 'reply_to_comment':reply_to_comment, 'message':message, 'from_group':from_group, 'captcha_sid':captcha_sid, 'captcha_key':input(f'Введите капчу указаную в ссылке: {captcha_url}\n')})
+            print('Сообщение прошло капчу')
+            captcha_key = None
+            captcha_sid = None
         else:
             session = vk_api.VkApi(token= info.token_vk)
             message = info.text[randint(0, len(info.text)-1)]
@@ -112,7 +117,7 @@ def main():
                     for reply_to_comment in comment_ids:
                         #print(reply_to_comment)
                         #print(type(info.your_group_id), info.your_group_id)
-                        create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id, captcha_sid)
+                        create_comment(post_owner_id, post_id, reply_to_comment, info.your_group_id)
                         print(f"Ответ на комментарий {post_owner_id} отправлен")
                         time.sleep(info.delay_for_message)
                 except Exception as ex:
